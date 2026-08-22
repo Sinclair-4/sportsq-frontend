@@ -6,75 +6,57 @@ import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Separator } from "@/components/ui/separator"
-import ClubCard from "./ClubCard"
+import ClubCard, { ClubCardProps } from "./ClubCard"
 import ClubCardSkeleton from "@/components/ClubCardSkeleton"
 import Link from "next/link"
+import { fetchApi } from "@/lib/fetchApi"
 
 const sortItems = ["All", "Popular", "New", "Nearby"]
 
 export default function Page() {
     const [selectedSort, setSelectedSort] = useState("All");
-
     const [loading, setLoading] = useState(true);
+    const [clubs, setClubs] = useState<ClubCardProps[]>([])
 
     useEffect(() => {
         setTimeout(() => {
             setLoading(false);
-        }, 1500);
+        }, 1000);
     }, []);
 
-    const clubs = [
+    useEffect(() => {
+        try {
+            async function fetchData() {
+                setLoading(true);
+
+                const response = await fetchApi('api/clubs/', {
+                    method: 'GET'
+                });
+                const json = await response.json()
+                console.log(json)
+
+                setClubs(json.data)
+            }
+            fetchData()
+        } catch (err) {
+            console.error("Error fetching clubs:", err)
+        } finally {
+            setLoading(false);
+        }
+    }, [])
+
+    const dummyClubs = [
         {
+            id: 'b2012d3d-62da-4e58-b261-be1c9197344c',
             name: "D'Racketeers",
             description: 'Badminton club for everyone in all levels. Weekly queueing sessions during weekends.',
-            members: 133,
+            members: [''],
             logo: '/images/D\'Racketeers Logo.jfif',
             background: '/images/D\'Racketeers @J&J.jfif',
             province: 'Bulacan',
             country: 'Philippines',
-            metadata: ['Beginer Friendly', 'Weekly Sessions'],
-        },
-        {
-            name: "Alley Smash",
-            description: "Smash. Play. Community. C'mon now gather your friends and family!",
-            members: 1000,
-            province: 'Maguindanao del Norte',
-            country: 'Philippines',
-        },
-        {
-            name: "Shuttle Squad",
-            description: "A friendly community for badminton players of all skill levels.",
-            members: 342,
-        },
-        {
-            name: "Angeles Badminton Club",
-            description: "Competitive games, casual sessions, and good vibes.",
-            members: 856,
-        },
-        {
-            name: "Smash Bros",
-            description: "Looking for people to play, improve, and have fun with.",
-            members: 128,
-        },
-        {
-            name: "Court Kings",
-            description: "For players who want regular games and friendly competition.",
-            members: 521,
-        },
-        {
-            name: "Rally Point",
-            description: "Meet local players, join games, and build your badminton circle.",
-            members: 267,
-        },
-        {
-            name: "Birdie Club",
-            description: "Casual badminton for everyone. No experience required.",
-            members: 74,
-        },
-        {
-            name: "Net Warriors",
-            description: "Train hard, play harder. Weekly badminton sessions and events.",
-            members: 694,
+            tags: ['Beginer Friendly', 'Weekly Sessions'],
+            slug: 'd-racketeers-testing',
         },
     ]
 
@@ -140,7 +122,7 @@ export default function Page() {
                     <span className="flex items-center gap-1 text-sm text-muted-foreground">
                         Communities
                         <Dot className="size-4" />
-                        {clubs.length}
+                        {dummyClubs.length + clubs.length}
                     </span>
 
                     {/* <Button><PlusIcon />Create</Button> */}
@@ -159,8 +141,20 @@ export default function Page() {
 
                     {
                         !loading && (
+                            dummyClubs.map((club) => (
+                                <div key={club.id}>
+                                    <ClubCard
+                                        {...club}
+                                    />
+                                </div>
+                            ))
+                        )
+                    }
+
+                    {
+                        !loading && (
                             clubs.map((club) => (
-                                <div key={club.name}>
+                                <div key={club.id}>
                                     <ClubCard
                                         {...club}
                                     />

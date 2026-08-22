@@ -1,18 +1,22 @@
+import BadmintonCourtSvg from "@/components/BadmintonCourtSvg"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { UUID } from "crypto"
 import { Users } from "lucide-react"
 import Link from "next/link"
 
 export type ClubCardProps = {
-    name?: string
+    id?: string
+    name: string
     description?: string
-    members?: number
+    members: string[]
     logo?: string
     background?: string
     province?: string
     country?: string
     sports?: string[]
-    metadata?: string[]
+    tags?: string[]
+    slug: string
 }
 
 function getClubInitials(name: string) {
@@ -32,110 +36,22 @@ function getClubInitials(name: string) {
     return `${words[0][0]}${words[1][0]}`.toUpperCase()
 }
 
-export function BadmintonCourtSvg() {
-    return (
-        <div className="absolute inset-0 flex items-center justify-center [perspective:800px]">
-            <div className="h-[150%] w-[150%] translate-y-[2%] opacity-30 [transform:rotateX(62deg)_rotateZ(-22deg)]">
-                <svg
-                    viewBox="0 0 1340 610"
-                    className="h-full w-full max-w-none"
-                    fill="none"
-                    stroke="var(--sidebar-primary)"
-                    strokeWidth="3"
-                    vectorEffect="non-scaling-stroke"
-                    aria-hidden="true"
-                    preserveAspectRatio="xMidYMid meet"
-                >
-                    {/* Court boundary */}
-                    <rect
-                        x="0"
-                        y="0"
-                        width="1340"
-                        height="610"
-                    />
-
-                    {/* Doubles sidelines */}
-                    <line
-                        x1="0"
-                        y1="46"
-                        x2="1340"
-                        y2="46"
-                    />
-                    <line
-                        x1="0"
-                        y1="564"
-                        x2="1340"
-                        y2="564"
-                    />
-
-                    {/* Net */}
-                    <line
-                        x1="670"
-                        y1="0"
-                        x2="670"
-                        y2="610"
-                        strokeWidth="5"
-                    />
-
-                    {/* Singles sidelines */}
-                    <line
-                        x1="472"
-                        y1="0"
-                        x2="472"
-                        y2="610"
-                    />
-                    <line
-                        x1="868"
-                        y1="0"
-                        x2="868"
-                        y2="610"
-                    />
-
-                    {/* Short service lines */}
-                    <line
-                        x1="76"
-                        y1="0"
-                        x2="76"
-                        y2="610"
-                    />
-                    <line
-                        x1="1264"
-                        y1="0"
-                        x2="1264"
-                        y2="610"
-                    />
-
-                    {/* Center service lines */}
-                    <line
-                        x1="0"
-                        y1="305"
-                        x2="472"
-                        y2="305"
-                    />
-                    <line
-                        x1="868"
-                        y1="305"
-                        x2="1340"
-                        y2="305"
-                    />
-                </svg>
-            </div>
-        </div>
-    )
-}
-
 export default function ClubCard({
-    name = "D'Racketeers",
-    description = "Badminton club for everyone in all levels",
-    members = 120,
+    id,
+    name,
+    description,
+    members,
     logo,
     background,
     province,
     country,
     sports = [],
-    metadata: adjectives = [],
+    tags = [],
+    slug,
 }: ClubCardProps) {
     const initials = getClubInitials(name)
+
+    const href = 'clubs/' + slug
 
     return (
         <div className="group flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:cursor-pointer h-full">
@@ -166,7 +82,7 @@ export default function ClubCard({
                         <img
                             src="/images/philippines.png"
                             alt="Philippines"
-                            className="h-full w-full object-cover"
+                            className="object-contain"
                         />
                     </div>
                 )}
@@ -201,7 +117,7 @@ export default function ClubCard({
                     <div className="ml-23 flex w-full min-w-0">
                         <div className="flex w-2/3 min-w-0 flex-col">
                             <Link
-                                href={`/app/clubs/${encodeURIComponent(name)}`}
+                                href={href}
                                 className="min-w-0"
                             >
                                 <h3 className="truncate text-base font-semibold hover:underline">
@@ -211,7 +127,7 @@ export default function ClubCard({
 
                             <div className="flex items-center gap-1 text-sm text-muted-foreground">
                                 <Users className="size-4 shrink-0" />
-                                <span>{members.toLocaleString()}</span>
+                                <span>{members?.length?.toLocaleString()}</span>
                             </div>
                         </div>
 
@@ -227,15 +143,15 @@ export default function ClubCard({
                     </div>
                 </div>
 
-                {/* Pills */}
+                {/* Tags */}
                 {
-                    (sports.length || adjectives.length) > 0 && (
+                    (sports.length || tags.length) > 0 && (
                         <div className="flex gap-2 flex-wrap">
                             {sports?.map((sport) => (
-                                <Badge variant="secondary">{sport}</Badge>
+                                <Badge variant="secondary" key={sport}>{sport}</Badge>
                             ))}
-                            {adjectives?.map((adjective) => (
-                                <Badge variant="secondary">{adjective}</Badge>
+                            {tags?.map((tag) => (
+                                <Badge variant="secondary" key={tag}>{tag}</Badge>
                             ))}
                         </div>
                     )}
@@ -251,12 +167,14 @@ export default function ClubCard({
                         View
                     </Button>
 
-                    <Button
-                        variant="default"
-                        className="transition-transform duration-200 hover:-rotate-5"
-                    >
-                        Join
-                    </Button>
+                    <Link href={href}>
+                        <Button
+                            variant="default"
+                            className="transition-transform duration-200 hover:-rotate-5"
+                        >
+                            Join
+                        </Button>
+                    </Link>
                 </div>
             </div>
         </div>

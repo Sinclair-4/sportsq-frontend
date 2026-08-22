@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import Link from "next/link"
-import { Asterisk, ChevronLeftIcon, ImageIcon } from "lucide-react"
+import { Asterisk, CheckIcon, ChevronLeftIcon, ImageIcon, LockIcon, User } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -13,6 +13,9 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import provinces from "@/lib/philippinesPronvinces"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import BadmintonCourtSvg from "@/components/BadmintonCourtSvg"
+import { fetchApi } from "@/lib/fetchApi"
 
 const metadataOptions = [
     "Beginner friendly",
@@ -30,11 +33,19 @@ const metadataOptions = [
 ]
 
 const Page = () => {
-    const [visibility, setVisibility] = useState("public")
-    const [metadata, setMetadata] = useState<string[]>([])
+    const formRef = useRef<HTMLFormElement>(null)
+
+    const [province, setProvince] = useState("")
+    const [country, setCountry] = useState("Philippines")
+    const [visibility, setVisibility] = useState("PUBLIC")
+    const [tags, setTags] = useState<string[]>([])
+
+    const [openDialog, setOpenDialog] = useState(false);
+
+    const [data, setData] = useState<any>({});
 
     const toggleMetadata = (item: string) => {
-        setMetadata((current) => {
+        setTags((current) => {
             if (current.includes(item)) {
                 return current.filter((value) => value !== item)
             }
@@ -47,11 +58,63 @@ const Page = () => {
         })
     }
 
+    async function handleSubmit(event: React.SubmitEvent<HTMLFormElement>) {
+        event.preventDefault()
+
+        try {
+            const form = new FormData(event.currentTarget)
+
+            const name = form.get("name") as string
+            const description = form.get("description") as string
+            const province = form.get("province") as string
+
+            const formData = {
+                name,
+                description,
+                province,
+                country,
+                visibility: visibility.toUpperCase(),
+                tags,
+            }
+
+            const response = await fetchApi("api/clubs/create-club", {
+                method: "POST",
+                body: JSON.stringify(formData),
+                headers: {
+                    "Content-Type": "application/json",
+                },
+            })
+
+            const json = await response.json()
+
+            console.log("[handleSubmit][create-club] json:", json)
+
+            if (response.ok) {
+                // Save data for the success dialog
+                setData(json.data)
+
+                // Open dialog
+                setOpenDialog(true)
+
+                // Reset form
+                formRef.current?.reset()
+                setProvince("")
+                setCountry("Philippines")
+                setVisibility("publicPUBLIC")
+                setTags([])
+            } else {
+                console.log("Failed to create club", json)
+            }
+        } catch (error) {
+            console.error(error)
+        }
+    }
+
     return (
-        <div className="container max-w-2xl space-y-6 py-6">
+        <div className="container max-w-2xl space-y-6">
             {/* Header */}
             <div className="flex items-center gap-2">
-                <Link href="/app/clubs">
+                <Link href="/home/clubs">
                     <Button
                         variant="ghost"
                         size="icon"
@@ -73,7 +136,7 @@ const Page = () => {
                 </div>
             </div >
 
-            <form className="space-y-8">
+            <form className="space-y-8" onSubmit={handleSubmit} ref={formRef}>
                 {/* Basic information */}
                 <section className="space-y-5">
                     <div className="space-y-1">
@@ -164,7 +227,11 @@ const Page = () => {
                                 Province
                             </Label>
 
-                            <Select name="province">
+                            <Select
+                                name="province"
+                                value={province}
+                                onValueChange={(value) => setProvince(value ?? "")}
+                            >
                                 <SelectTrigger id="province" className="w-full">
                                     <SelectValue placeholder="Select a province" />
                                 </SelectTrigger>
@@ -193,6 +260,8 @@ const Page = () => {
                                 id="country"
                                 name="country"
                                 placeholder="Philippines"
+                                value={country}
+                                onChange={(e) => setCountry(e.target.value)}
                             />
                         </div>
                     </div>
@@ -212,15 +281,15 @@ const Page = () => {
                         </div>
 
                         <Badge variant="secondary" className="shrink-0">
-                            {metadata.length}/2
+                            {tags.length}/2
                         </Badge>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
                         {metadataOptions.map((item) => {
-                            const checked = metadata.includes(item)
+                            const checked = tags.includes(item)
                             const disabled =
-                                metadata.length >= 2 && !checked
+                                tags.length >= 2 && !checked
 
                             return (
                                 <label
@@ -267,20 +336,27 @@ const Page = () => {
                     <RadioGroup
                         value={visibility}
                         onValueChange={setVisibility}
-                        className="gap-3"
+                        className="gap-3 grid grid-cols-2"
                     >
+                        {/* Public */}
                         <label
                             htmlFor="public"
-                            className="flex cursor-pointer items-start gap-3 rounded-lg border p-4 hover:bg-muted/50"
+                            className={[
+                                "flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors",
+                                visibility === "PUBLIC"
+                                    ? "border-primary bg-primary/5"
+                                    : "hover:bg-muted/50",
+                            ].join(" ")}
                         >
                             <RadioGroupItem
                                 id="public"
-                                value="public"
+                                value="PUBLIC"
                                 className="mt-0.5"
                             />
 
                             <div className="space-y-1">
-                                <p className="text-sm font-medium">
+                                <p className="text-sm font-medium flex gap-1">
+                                    <User className="size-4" />
                                     Public
                                 </p>
 
@@ -293,16 +369,22 @@ const Page = () => {
 
                         <label
                             htmlFor="private"
-                            className="flex cursor-pointer items-start gap-3 rounded-lg border p-4 hover:bg-muted/50"
+                            className={[
+                                "flex cursor-pointer items-start gap-3 rounded-lg border p-4 transition-colors",
+                                visibility === "PRIVATE"
+                                    ? "border-primary bg-primary/5"
+                                    : "hover:bg-muted/50",
+                            ].join(" ")}
                         >
                             <RadioGroupItem
                                 id="private"
-                                value="private"
+                                value="PRIVATE"
                                 className="mt-0.5"
                             />
 
                             <div className="space-y-1">
-                                <p className="text-sm font-medium">
+                                <p className="text-sm font-medium flex gap-1">
+                                    <LockIcon className="size-4" />
                                     Private
                                 </p>
 
@@ -321,7 +403,7 @@ const Page = () => {
                         type="button"
                         variant="ghost"
                     >
-                        <Link href="/clubs">
+                        <Link href="/home/clubs">
                             Cancel
                         </Link>
                     </Button>
@@ -331,6 +413,59 @@ const Page = () => {
                     </Button>
                 </div>
             </form>
+
+            <Dialog open={openDialog} onOpenChange={setOpenDialog}>
+                <DialogContent showCloseButton={false} className="sm:max-w-sm p-0 overflow-hidden">
+                    <div className="flex flex-col items-center text-center">
+                        {/* Header with Icon */}
+                        <DialogHeader className="relative flex w-full min-h-10 items-center justify-center overflow-hidden bg-gradient-to-br from-green-400 via-emerald-500 to-green-400 py-5 dark">
+                            {/* Decorative glow */}
+                            <div className="absolute -top-10 left-1/2 size-32 -translate-x-1/2 rounded-full bg-white/20 blur-2xl" />
+
+                            <BadmintonCourtSvg
+                                color="white"
+                                opacity={100}
+                            />
+
+                            <div className="relative z-[2] flex size-12 items-center justify-center rounded-full bg-white text-green-600 shadow-lg shadow-green-900/50">
+                                <CheckIcon className="size-6" strokeWidth={3} color="green" />
+                            </div>
+                        </DialogHeader>
+
+                        {/* Main Body Content */}
+                        <div className="flex flex-col items-center p-4 w-full">
+                            <DialogTitle className="text-xl font-semibold">
+                                SUCCESS
+                            </DialogTitle>
+
+                            <DialogDescription className="mt-1 px-11">
+                                <span className="font-medium text-foreground">
+                                    {data.name}
+                                </span>{" "}
+                                was successfully created and ready to go
+                            </DialogDescription>
+
+                            {/* Action Buttons */}
+                            <DialogFooter className="mt-4 grid grid-cols-2 w-full gap-2">
+                                <Link href="/home/clubs">
+                                    <Button
+                                        variant="outline"
+                                        className="w-full"
+                                    >
+                                        Close
+                                    </Button>
+                                </Link>
+
+                                <Link href={`/home/clubs/${data.slug}`}>
+                                    <Button className="hover:-rotate-2 w-full">
+                                        View club
+                                    </Button>
+                                </Link>
+                            </DialogFooter>
+                        </div>
+                    </div>
+                </DialogContent>
+            </Dialog>
         </div >
     )
 }

@@ -51,27 +51,52 @@ const Page = () => {
     useFocusOnCourt()
 
     return (
-        <div className="relative flex flex-col min-h-screen w-full items-center justify-center bg-background p-4 md:p-8 gap-10">
+        <div className="flex">
+            <div className='flex w-1/2 bg-muted'>
 
-            <div className="absolute top-6 left-6">
-                <ThemeToggle />
             </div>
 
+            <div className="@container relative grid min-h-screen w-full grid-cols-1 
+                md:grid-cols-[repeat(auto-fill,minmax(450px,1fr))]
+                2xl:grid-cols-2
+                md:items-center
+                justify-items-center
+                gap-6 p-6 md:p-8"
+            >
 
-            <BadmintonCourt
-                courtData={{
-                    courtNum: 1,
-                    mode: '',
-                }}
-            />
+                <div className="absolute top-6 left-6 z-10">
+                    <ThemeToggle />
+                </div>
 
-            <BadmintonCourt
-                courtData={{
-                    courtNum: 2,
-                    mode: '',
-                }}
-            />
+                <BadmintonCourt
+                    courtData={{
+                        courtNum: 1,
+                        mode: '',
+                    }}
+                />
 
+                <BadmintonCourt
+                    courtData={{
+                        courtNum: 2,
+                        mode: '',
+                    }}
+                />
+
+                <BadmintonCourt
+                    courtData={{
+                        courtNum: 3,
+                        mode: '',
+                    }}
+                />
+
+                <BadmintonCourt
+                    courtData={{
+                        courtNum: 4,
+                        mode: '',
+                    }}
+                />
+
+            </div>
         </div>
     )
 }

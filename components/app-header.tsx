@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Separator } from "@/components/ui/separator"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { menuItems } from "@/app/app/layout"
+import { menuItems } from "@/app/home/layout"
 
 export function AppHeader() {
     const pathname = usePathname()

@@ -2,11 +2,11 @@ type PlayerLevel = 'beginner' | 'intermediate' | 'advanced'
 type PlayerDisplayName = 'username' | 'fullName'
 
 export type PlayerItem2Props = {
-    playerUsername?: string | 'Sinclair';
-    playerFullname?: string | 'Sinclair';
-    playerDisplayName?: PlayerDisplayName | 'username';
-    playerGameCount?: number | 0;
-    playerLevel?: PlayerLevel | 'intermediate';
+    playerUsername?: string;
+    playerFullname?: string;
+    playerDisplayName?: PlayerDisplayName;
+    playerGameCount?: number;
+    playerLevel?: PlayerLevel;
 }
 
 export default function PlayerItem(props: PlayerItem2Props) {
@@ -14,8 +14,8 @@ export default function PlayerItem(props: PlayerItem2Props) {
         playerLevel = 'intermediate',
         playerUsername,
         playerFullname,
-        playerDisplayName,
-        playerGameCount,
+        playerDisplayName = 'username',
+        playerGameCount = 0,
     } = props;
 
     const PLAYER_LEVELS = {
@@ -37,17 +37,19 @@ export default function PlayerItem(props: PlayerItem2Props) {
         <div className="relative">
             <div
                 className={`
-                player-item
-                relative h-(--player-item-size) w-(--player-item-size)
-                rounded-full flex items-center justify-center shrink-0
-                border shadow-xs shadow-zinc-400 bg-zinc-100
-                border-zinc-300 cursor-pointer 
-                transition-all! duration-300!
-                select-none
-                focus:outline-1
-                focus:outline-yellow-400
-                z-11
-            `}
+                    player-item
+                    relative h-(--player-item-size) w-(--player-item-size)
+                    rounded-full flex items-center justify-center shrink-0
+                    border bg-zinc-100
+                    border-zinc-300 cursor-pointer 
+                    transition-all! duration-300!
+                    select-none
+                    focus:outline-1
+                    focus:outline-yellow-400
+                    z-11
+
+                    shadow-md
+                `}
             >
                 <div className={`
                 absolute inset-1 rounded-full border 

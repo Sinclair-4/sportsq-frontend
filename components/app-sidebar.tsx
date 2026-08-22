@@ -35,7 +35,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 import { Skeleton } from "@/components/ui/skeleton"
-import { menuItems } from "@/app/app/layout"
+import { menuItems } from "@/app/home/layout"
 
 // const menuItems = [
 //     {
@@ -121,8 +121,8 @@ export function AppSidebar() {
                         <SidebarMenu>
                             {menuItems.map((item) => {
                                 const isActive =
-                                    item.url === "/app"
-                                        ? pathname === "/app"
+                                    item.url === "/home"
+                                        ? pathname === "/home"
                                         : pathname.startsWith(item.url)
 
                                 return (
