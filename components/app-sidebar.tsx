@@ -3,14 +3,12 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import { useQuery } from "@tanstack/react-query"
 import {
     ChevronsUpDown,
-    Gamepad2,
-    Home,
     LogOut,
     Settings,
     User,
-    UsersRound,
 } from "lucide-react"
 
 import {
@@ -36,42 +34,59 @@ import {
 
 import { Skeleton } from "@/components/ui/skeleton"
 import { menuItems } from "@/app/home/layout"
+import { fetchApi } from "@/lib/fetchApi"
+import ClubAvatar from "./ClubAvatar"
 
-// const menuItems = [
-//     {
-//         title: "Home",
-//         url: "/app",
-//         icon: Home,
-//     },
-//     {
-//         title: "Clubs",
-//         url: "/app/clubs",
-//         icon: UsersRound,
-//     },
-//     {
-//         title: "Session",
-//         url: "/app/session",
-//         icon: Gamepad2,
-//     },
-// ]
+type UserData = {
+    id: string
+    username: string
+    fullname: string
+    email: string
+}
 
+async function getCurrentUser() {
+    const response = await fetchApi(
+        "api/user/me",
+        {
+            credentials: "include",
+        }
+    )
+
+    if (!response.ok) {
+        throw new Error("Failed to fetch user")
+    }
+
+    const data = await response.json()
+    console.log(data);
+
+    return data.data
+}
 
 export function AppSidebar() {
     const pathname = usePathname()
     const router = useRouter()
 
-    const [userData, setUserData] = React.useState<any | null>(null)
-    const [profileLoading, setProfileLoading] = React.useState(false)
     const [loggingOut, setLoggingOut] = React.useState(false)
+
+    const {
+        data: userData,
+        isLoading: profileLoading,
+    } = useQuery({
+        queryKey: ["user", "me"],
+        queryFn: getCurrentUser,
+    })
 
     async function handleLogout() {
         setLoggingOut(true)
 
         try {
-            await fetch("http://localhost:3000/api/auth/logout", {
-                method: "POST",
-                credentials: "include",
-            })
+            await fetch(
+                "http://localhost:3000/api/auth/logout",
+                {
+                    method: "POST",
+                    credentials: "include",
+                }
+            )
         } catch (error) {
             console.error("Logout request failed:", error)
         } finally {
@@ -82,10 +97,7 @@ export function AppSidebar() {
 
     return (
         <Sidebar collapsible="icon">
-            {/* ==================== */}
-            {/* Sidebar Header */}
-            {/* ==================== */}
-
+            {/* Header */}
             <SidebarHeader className="mt-2">
                 <SidebarMenu>
                     <SidebarMenuItem>
@@ -93,12 +105,10 @@ export function AppSidebar() {
                             size="lg"
                             tooltip="SportsQ"
                         >
-                            {/* Logo */}
-                            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary/15 text-sidebar-primary border border-sidebar-primary">
+                            <div className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-sidebar-primary bg-sidebar-primary/15 text-sidebar-primary">
                                 S
                             </div>
 
-                            {/* Name */}
                             <span className="truncate font-semibold">
                                 SportsQ
                             </span>
@@ -107,10 +117,7 @@ export function AppSidebar() {
                 </SidebarMenu>
             </SidebarHeader>
 
-            {/* ==================== */}
             {/* Navigation */}
-            {/* ==================== */}
-
             <SidebarContent>
                 <SidebarGroup>
                     <SidebarGroupLabel>
@@ -147,27 +154,34 @@ export function AppSidebar() {
                     </SidebarGroupContent>
                 </SidebarGroup>
 
-                {/* ==================== */}
-                {/* Active Session */}
-                {/* ==================== */}
+                {
+                    userData?.ownedClubs?.length > 0 && (
+                        <SidebarGroup>
+                            <SidebarGroupLabel>
+                                My Clubs
+                            </SidebarGroupLabel>
 
-                <SidebarGroup>
-                    <SidebarGroupLabel>
-                        Active Session
-                    </SidebarGroupLabel>
+                            <SidebarGroupContent>
+                                <SidebarMenu>
+                                    {userData?.ownedClubs?.map((club: any) => (
+                                        <SidebarMenuItem key={club.id}>
+                                            <SidebarMenuButton className="">
+                                                <div className="size-4 shrink-0 overflow-hidden rounded-md bg-green-400">
+                                                    {/* logo */}
+                                                </div>
 
-                    <SidebarGroupContent>
-                        <SidebarMenu>
-                            {/* Add active session items here */}
-                        </SidebarMenu>
-                    </SidebarGroupContent>
-                </SidebarGroup>
+                                                {club.name}
+                                            </SidebarMenuButton>
+                                        </SidebarMenuItem>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </SidebarGroup>
+                    )
+                }
             </SidebarContent>
 
-            {/* ==================== */}
             {/* Footer */}
-            {/* ==================== */}
-
             <SidebarFooter>
                 {profileLoading ? (
                     <SidebarMenu>
@@ -195,12 +209,10 @@ export function AppSidebar() {
                                                 "Profile"
                                             }
                                         >
-                                            {/* Avatar */}
                                             <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary/15 text-sidebar-primary">
                                                 <User className="size-4" />
                                             </div>
 
-                                            {/* User Information */}
                                             <div className="grid min-w-0 flex-1 text-left text-sm leading-tight">
                                                 <span className="truncate font-medium">
                                                     {userData?.username ??

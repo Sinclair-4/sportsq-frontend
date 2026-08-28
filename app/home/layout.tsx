@@ -26,8 +26,8 @@ export const menuItems = [
         icon: UsersRound,
     },
     {
-        title: "Session",
-        url: "/home/session",
+        title: "Queueing",
+        url: "/home/queueing",
         icon: Gamepad2,
     },
 ]
@@ -49,7 +49,7 @@ export default function AppLayout({
                 <SidebarInset>
                     <AppHeader />
 
-                    <main className="flex flex-1 flex-col items-center sm:p-4 md:p-6">
+                    <main className="flex flex-1 flex-col items-center p-4 md:p-6">
                         {children}
                     </main>
                 </SidebarInset>
