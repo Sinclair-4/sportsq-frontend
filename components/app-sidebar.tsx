@@ -74,6 +74,7 @@ export function AppSidebar() {
     } = useQuery({
         queryKey: ["user", "me"],
         queryFn: getCurrentUser,
+        refetchOnWindowFocus: false,
     })
 
     async function handleLogout() {

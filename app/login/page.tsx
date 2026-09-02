@@ -56,7 +56,7 @@ const Page = () => {
 
             if (!response.ok) {
                 console.log(`[login] login failed: ${json.error}`);
-                setError(json.error);
+                setError(json.message);
                 return;
             }
 

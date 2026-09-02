@@ -1,193 +1,386 @@
-'use client'
+"use client"
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { useForm } from "@tanstack/react-form";
-import { Asterisk, ChevronLeftIcon } from "lucide-react";
-import Link from "next/link";
-import { useState } from "react";
-import z from "zod";
+import { useState } from "react"
+import Link from "next/link"
+import { z } from "zod"
+import { ChevronLeftIcon } from "lucide-react"
+import { useMutation, useQuery } from "@tanstack/react-query"
 
-const formSchema = z.object({
-    name: z.string().min(1, "Please enter a name"),
-    location: z.string().min(1, "Please enter a location"),
-})
+import { Button } from "@/components/ui/button"
+import { fetchApi } from "@/lib/fetchApi"
 
-type FormData = z.infer<typeof formSchema>
+import { SessionVisibility } from "./SessionVisibility"
+import { BasicInfo } from "./BasicInfo"
+import { Configuration } from "./Configuration"
+import { SessionSuccess } from "./SessionSuccess"
 
-export default function CreateSession() {
-    const [page, setPage] = useState(0)
 
-    const pages = [
-        <BasicInfo />,
-        "asdfa",
-        "asdasa",
-        "asdfa"
-    ]
+// ---------------------------------------------
+// Types
+// ---------------------------------------------
 
-    const form = useForm({
-        defaultValues: {
-            name: "",
-            location: ""
-        } as FormData,
+export type OwnedClub = {
+    id: string
+    name: string
+    logo?: string
+}
 
-        onSubmit: ({ value }) => {
-            const result = formSchema.safeParse(value)
+type UserResponse = {
+    data?: {
+        ownedClubs?: OwnedClub[]
+    }
+}
 
-            if (!result.success) {
-                console.log(result.error)
-                return
-            }
+// type CreateSessionResponse = {
+//     data?: {
+//         name?: string
+//     }
+// }
 
-            console.log('submitted:', result.data)
+
+// ---------------------------------------------
+// Validation
+// ---------------------------------------------
+
+const formSchema = z
+    .object({
+        name: z.string().min(1, "Please enter a name"),
+        location: z.string().min(1, "Please enter a location"),
+        startsAt: z.string().min(1, "Please enter a start date"),
+        endsAt: z.string().min(1, "Please enter an end date"),
+        scope: z.enum(["CLUB", "PRIVATE"]),
+        clubId: z.string().optional(),
+        maxPlayers: z
+            .number()
+            .int("Maximum players must be a whole number")
+            .min(2, "Maximum players must be at least 2")
+            .optional(),
+    })
+    .superRefine((data, ctx) => {
+        if (data.scope === "CLUB" && !data.clubId) {
+            ctx.addIssue({
+                code: z.ZodIssueCode.custom,
+                path: ["clubId"],
+                message: "Select a club",
+            })
         }
     })
 
-    function BasicInfo() {
-        return (
-            <section className="space-y-6">
-                <div className="space-y-1">
-                    <h2 className="font-medium">Basic Information</h2>
-                    <p className="text-sm text-muted-foreground">
-                        This will help people find your session.
-                    </p>
-                </div>
+export type FormData = z.infer<typeof formSchema>
 
-                <form.Field name='name'>
-                    {(field) => (
-                        <div className="space-y-2">
-                            <Label className="gap-0! items-center">
-                                <Asterisk className="text-destructive" />
-                                Session Name
-                            </Label>
-                            <Input
-                                value={field.state.value}
-                                onChange={(e) => field.handleChange(e.target.value)}
-                                placeholder="e.g. Queueing night"
-                            />
-                        </div>
-                    )}
-                </form.Field>
 
-                <form.Field name='location'>
-                    {(field) => (
-                        <div className="space-y-2">
-                            <Label className="gap-0! items-center">
-                                <Asterisk className="text-destructive" />
-                                Location
-                            </Label>
-                            <Input
-                                value={field.state.value}
-                                onChange={(e) => field.handleChange(e.target.value)}
-                                placeholder="e.g. 123 Main St"
-                            />
-                        </div>
-                    )}
-                </form.Field>
-            </section>
-        )
+// ---------------------------------------------
+// Component
+// ---------------------------------------------
+
+export default function CreateSession() {
+
+    // Current step
+    const [page, setPage] = useState(0)
+
+    // Form data
+    const [form, setForm] = useState<FormData>({
+        name: "",
+        location: "",
+        startsAt: "",
+        endsAt: "",
+        scope: "PRIVATE",
+        clubId: undefined,
+        maxPlayers: undefined,
+    })
+
+    // Created session name
+    const [success, setSuccess] = useState<string | null>(null)
+
+    // Created session code
+    const [code, setCode] = useState<string | null>(null)
+
+    // ---------------------------------------------
+    // Fetch clubs
+    // ---------------------------------------------
+
+    const {
+        data: clubs = [],
+        isLoading: loadingClubs,
+        isError: clubsError,
+    } = useQuery({
+        queryKey: ["user", "me"],
+        queryFn: async (): Promise<OwnedClub[]> => {
+            const response = await fetchApi("api/user/me", {
+                credentials: "include",
+            })
+
+            if (!response.ok) {
+                throw new Error("Failed to fetch user")
+            }
+
+            const data: UserResponse = await response.json()
+
+            return data.data?.ownedClubs ?? []
+        },
+    })
+
+
+    // ---------------------------------------------
+    // Create session
+    // ---------------------------------------------
+
+    const createSessionMutation = useMutation({
+        mutationFn: async (data: FormData): Promise<any> => {
+            const response = await fetchApi("api/session/create-session", {
+                method: "POST",
+                credentials: "include",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify(data),
+            })
+
+            const json: any = await response.json()
+
+            console.log(
+                "[create-session] response:",
+                json
+            )
+
+            if (!response.ok) {
+                throw new Error("Failed to create session")
+            }
+
+            return json
+        },
+
+        onSuccess: (data) => {
+            setSuccess(
+                data.data?.name ??
+                form.name
+            )
+
+            setCode(
+                data.data?.joinCode ?? ""
+            )
+        },
+
+        onError: (error) => {
+            console.error("Failed to create session:", error)
+        },
+    })
+
+
+    // ---------------------------------------------
+    // Update form
+    // ---------------------------------------------
+
+    function updateForm<K extends keyof FormData>(
+        field: K,
+        value: FormData[K]
+    ) {
+        setForm((previous) => ({
+            ...previous,
+            [field]: value,
+        }))
     }
+
+
+    // ---------------------------------------------
+    // Navigation
+    // ---------------------------------------------
+
+    function nextPage() {
+        setPage((previous) => previous + 1)
+    }
+
+    function previousPage() {
+        setPage((previous) => previous - 1)
+    }
+
+
+    // ---------------------------------------------
+    // Check if current page is valid
+    // ---------------------------------------------
+
+    function canContinue() {
+
+        if (page === 0) {
+            return (
+                form.scope === "PRIVATE" ||
+                !!form.clubId
+            )
+        }
+
+        if (page === 1) {
+            return (
+                form.name.trim().length > 0 &&
+                form.location.trim().length > 0 &&
+                form.startsAt.trim().length > 0 &&
+                form.endsAt.trim().length > 0
+            )
+        }
+
+        return true
+    }
+
+
+    // ---------------------------------------------
+    // Submit
+    // ---------------------------------------------
+
+    function submit() {
+        const result = formSchema.safeParse(form)
+
+        if (!result.success) {
+            console.error(result.error)
+            return
+        }
+
+        createSessionMutation.mutate(result.data)
+    }
+
+
+    // ---------------------------------------------
+    // Render
+    // ---------------------------------------------
 
     return (
         <div className="w-full flex flex-col max-w-2xl gap-6 h-full">
-            <div className="flex items-center gap-2">
-                <Link href="/home/queueing">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                    >
-                        <ChevronLeftIcon />
-                        <span className="sr-only">Back</span>
-                    </Button>
-                </Link>
 
+            {success ? (
 
-                <div>
-                    <h1 className="text-xl font-semibold">
-                        Start your session
-                    </h1>
+                <SessionSuccess
+                    sessionName={success}
+                    viewHref={`/home/queueing/${code}`}
+                />
 
-                    <p className="text-sm text-muted-foreground">
-                        Customize your queueing experience.
-                    </p>
-                </div>
-            </div >
+            ) : (
 
-            {/* Navigation chu chu */}
-            {/* <div className="mx-auto flex">
-                {
-                    pages.map((pageEl, index) => (
-                        <div className="flex items-center">
-                            <button
-                                className={`
-                                        w-8 h-8 flex items-center justify-center rounded-full text-sm font-medium transition-colors duration-400
-                                        ${index === page ? 'bg-primary text-muted' : 'bg-muted  text-muted-foreground'}
-                                    `}
+                <>
+
+                    {/* Header */}
+
+                    <div className="flex items-center gap-2">
+
+                        <Link href="/home/queueing">
+                            <Button
+                                variant="ghost"
+                                size="icon"
                             >
-                                {index + 1}
-                            </button>
-                            <div className={`
-                                w-12 h-1 
-                                ${index === page
-                                    ? 'bg-primary'
-                                    : 'bg-muted'
-                                }    
-                            `} />
+                                <ChevronLeftIcon />
+
+                                <span className="sr-only">
+                                    Back
+                                </span>
+                            </Button>
+                        </Link>
+
+                        <div>
+                            <h1 className="text-xl font-semibold">
+                                Start your session
+                            </h1>
+
+                            <p className="text-sm text-muted-foreground">
+                                Customize your queueing experience.
+                            </p>
                         </div>
-                    ))
-                }
-            </div> */}
 
-            <div className="flex gap-4">
-                {
-                    pages.map((pageEl, index) => (
-                        <div className={`
-                            flex-1 h-1
-                            ${index === page
-                                ? 'bg-primary'
-                                : 'bg-muted'
-                            }    
-                            shadow-xs
-                        `}></div>
-                    ))
-                }
-            </div>
+                    </div>
 
-            {/* Multi-stage form */}
-            <div className='flex-1'>
-                {pages[page]}
-            </div>
 
-            {/* Controls */}
-            <div className="grid grid-cols-2 gap-4">
-                <Button
-                    variant="secondary"
-                    className={`
+                    {/* Progress */}
 
-                    `}
-                    disabled={page === 0}
-                    onClick={() => setPage(page - 1)}
-                >Previous</Button>
+                    <div className="flex gap-4">
 
-                <Button
-                    className={`
-                        hidden
-                        ${page === pages.length - 1 ? '' : 'block'}
-                    `}
-                    disabled={page === pages.length - 1}
-                    onClick={() => setPage(page + 1)}
-                >Next</Button>
+                        {[0, 1, 2].map((step) => (
+                            <div
+                                key={step}
+                                className={`
+                                    flex-1
+                                    h-1
+                                    shadow-xs
+                                    ${step === page
+                                        ? "bg-primary"
+                                        : "bg-muted"
+                                    }
+                                `}
+                            />
+                        ))}
 
-                <Button
-                    type="submit"
-                    className={`
-                        hidden
-                        ${page === pages.length - 1 ? 'block' : ''}
-                    `}
-                    disabled={page !== pages.length - 1}
-                >Submit</Button>
-            </div>
+                    </div>
+
+
+                    {/* Pages */}
+
+                    {page === 0 && (
+                        <SessionVisibility
+                            form={form}
+                            clubs={clubs}
+                            loadingClubs={loadingClubs}
+                            updateForm={updateForm}
+                        />
+                    )}
+
+                    {page === 1 && (
+                        <BasicInfo
+                            form={form}
+                            updateForm={updateForm}
+                        />
+                    )}
+
+                    {page === 2 && (
+                        <Configuration
+                            form={form}
+                            updateForm={updateForm}
+                        />
+                    )}
+
+
+                    {/* Controls */}
+
+                    <div className="grid grid-cols-2 gap-4 mt-auto">
+
+                        <Button
+                            variant="secondary"
+                            disabled={
+                                page === 0 ||
+                                createSessionMutation.isPending
+                            }
+                            onClick={previousPage}
+                        >
+                            Previous
+                        </Button>
+
+
+                        {page < 2 ? (
+
+                            <Button
+                                disabled={
+                                    !canContinue() ||
+                                    clubsError
+                                }
+                                onClick={nextPage}
+                            >
+                                Next
+                            </Button>
+
+                        ) : (
+
+                            <Button
+                                disabled={createSessionMutation.isPending}
+                                onClick={submit}
+                            >
+                                {createSessionMutation.isPending
+                                    ? "Creating..."
+                                    : "Submit"
+                                }
+                            </Button>
+
+                        )}
+
+                    </div>
+
+                </>
+
+            )}
+
         </div>
     )
 }

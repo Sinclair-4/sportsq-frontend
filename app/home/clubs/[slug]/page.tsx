@@ -16,6 +16,7 @@ import { Button } from '@/components/ui/button'
 import { Spinner } from '@/components/ui/spinner'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import BadmintonCourtSvg from '@/components/BadmintonCourtSvg'
+import { fetchApi } from '@/lib/fetchApi'
 
 type Club = {
     id: string
@@ -34,7 +35,7 @@ type Club = {
 }
 
 async function getClub(slug: string): Promise<{ data: Club }> {
-    const res = await fetch(
+    const res = await fetchApi(
         `http://localhost:3000/api/clubs/${encodeURIComponent(slug)}`,
         {
             method: 'GET',

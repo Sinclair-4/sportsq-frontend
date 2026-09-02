@@ -23,16 +23,20 @@ function getClubInitials(name: string) {
 }
 
 export default function ClubAvatar(props: ClubAvatarProps) {
-    const { logo, name, border = true } = props;
+    const { logo, name, size = 20, border = true } = props;
     const initials = getClubInitials(name);
+    const px = size * 4;
+    const fontSize = size >= 20 ? 18 : Math.max(10, px * 0.35);
 
     return (
-        <div className={`
-            ${props.size ? `size-${props.size || 20}` : 'size-20'}
+        <div
+            className={`
             overflow-hidden rounded-full 
-            ${props.border ? 'border-4 border-card' : ''}
+            ${border ? 'border-4 border-card' : ''}
             bg-muted shadow-md
-        `}>
+        `}
+            style={{ width: px, height: px }}
+        >
             {logo ? (
                 <img
                     src={logo}
@@ -41,10 +45,29 @@ export default function ClubAvatar(props: ClubAvatarProps) {
                 />
             ) : (
                 <div className="relative flex h-full w-full items-center justify-center overflow-hidden bg-gradient-to-br from-sidebar-primary/20 via-sidebar-primary/10 to-sidebar-primary/5">
-                    <div className="absolute -right-5 -top-5 size-12 rounded-full bg-sidebar-primary/20 blur-md" />
-                    <div className="absolute -bottom-6 -left-4 size-14 rounded-full bg-sidebar-primary/15 blur-md" />
+                    <div
+                        className="absolute rounded-full bg-sidebar-primary/20 blur-md"
+                        style={{
+                            width: px * 0.6,
+                            height: px * 0.6,
+                            right: -px * 0.25,
+                            top: -px * 0.25,
+                        }}
+                    />
+                    <div
+                        className="absolute rounded-full bg-sidebar-primary/15 blur-md"
+                        style={{
+                            width: px * 0.7,
+                            height: px * 0.7,
+                            left: -px * 0.2,
+                            bottom: -px * 0.3,
+                        }}
+                    />
 
-                    <span className="relative text-lg font-bold tracking-tight text-sidebar-primary">
+                    <span
+                        className="relative font-bold tracking-tight text-sidebar-primary"
+                        style={{ fontSize }}
+                    >
                         {initials}
                     </span>
                 </div>

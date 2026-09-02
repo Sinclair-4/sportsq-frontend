@@ -2,7 +2,14 @@ import { NextRequest, NextResponse } from "next/server"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
+const disable = false;
+
 export async function middleware(req: NextRequest) {
+    if (disable) {
+        console.log('[middleware] middleware is disabled.')
+        return;
+    }
+
     const accessToken = req.cookies.get("access_token")?.value
     const refreshToken = req.cookies.get("refresh_token")?.value
 
