@@ -61,7 +61,7 @@ export default function Page() {
     ]
 
     return (
-        <main className="w-full flex flex-col max-w-7xl px-4 py-6">
+        <main className="w-full flex flex-col max-w-8xl xs:p-2 md:px-4 md:py-6">
             {/* Header */}
             <div className="flex justify-between gap-4 w-full">
                 <div className="space-y-1">
@@ -128,7 +128,7 @@ export default function Page() {
                     {/* <Button><PlusIcon />Create</Button> */}
                 </div>
 
-                <div className="grid grid-cols-[repeat(auto-fill,minmax(320px,1fr))] gap-4 ">
+                <div className="grid md:grid-cols-[repeat(auto-fill,minmax(420px,1fr))] gap-4 grid-cols-1 shrink-0">
                     {
                         loading && (
                             <>

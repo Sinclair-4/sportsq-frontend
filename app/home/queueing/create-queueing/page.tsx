@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Link from "next/link"
 import { z } from "zod"
 import { ChevronLeftIcon } from "lucide-react"
@@ -19,17 +19,17 @@ import { SessionSuccess } from "./SessionSuccess"
 // Types
 // ---------------------------------------------
 
-export type OwnedClub = {
-    id: string
-    name: string
-    logo?: string
-}
+// export type OwnedClub = {
+//     id: string
+//     name: string
+//     logo?: string
+// }
 
-type UserResponse = {
-    data?: {
-        ownedClubs?: OwnedClub[]
-    }
-}
+// type UserResponse = {
+//     data?: {
+//         ownedClubs?: OwnedClub[]
+//     }
+// }
 
 // type CreateSessionResponse = {
 //     data?: {
@@ -100,12 +100,12 @@ export default function CreateSession() {
     // ---------------------------------------------
 
     const {
-        data: clubs = [],
+        data,
         isLoading: loadingClubs,
         isError: clubsError,
     } = useQuery({
         queryKey: ["user", "me"],
-        queryFn: async (): Promise<OwnedClub[]> => {
+        queryFn: async () => {
             const response = await fetchApi("api/user/me", {
                 credentials: "include",
             })
@@ -114,11 +114,17 @@ export default function CreateSession() {
                 throw new Error("Failed to fetch user")
             }
 
-            const data: UserResponse = await response.json()
+            const data = await response.json()
 
             return data.data?.ownedClubs ?? []
         },
     })
+
+    const { ownedClubs: clubs = [] } = data ?? []
+
+    useEffect(() => {
+        console.log(clubs)
+    }, [clubs])
 
 
     // ---------------------------------------------

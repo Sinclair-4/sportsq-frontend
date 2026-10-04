@@ -54,7 +54,7 @@ export default function ClubCard({
     const href = 'clubs/' + slug
 
     return (
-        <div className="group flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:cursor-pointer h-full">
+        <div className="group flex flex-col overflow-hidden rounded-xl border bg-card text-card-foreground shadow-sm transition-transform duration-200 hover:scale-[1.02] hover:cursor-pointer h-full shrink-0">
             {/* Cover */}
             <div className="relative h-28 w-full overflow-hidden bg-muted">
                 {background ? (

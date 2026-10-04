@@ -36,7 +36,7 @@ type Club = {
 
 async function getClub(slug: string): Promise<{ data: Club }> {
     const res = await fetchApi(
-        `http://localhost:3000/api/clubs/${encodeURIComponent(slug)}`,
+        `api/clubs/${encodeURIComponent(slug)}`,
         {
             method: 'GET',
             credentials: 'include',

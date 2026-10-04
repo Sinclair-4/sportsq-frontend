@@ -57,7 +57,7 @@ async function getCurrentUser() {
     }
 
     const data = await response.json()
-    console.log(data);
+    console.log('[getCurrentUser]', data);
 
     return data.data
 }
@@ -74,7 +74,8 @@ export function AppSidebar() {
     } = useQuery({
         queryKey: ["user", "me"],
         queryFn: getCurrentUser,
-        refetchOnWindowFocus: false,
+        refetchOnWindowFocus: true,
+        staleTime: 30_000,
     })
 
     async function handleLogout() {
@@ -156,6 +157,36 @@ export function AppSidebar() {
                 </SidebarGroup>
 
                 {
+                    userData?.sessionsOwned?.length > 0 && (
+                        <SidebarGroup>
+                            <SidebarGroupLabel>
+                                My Sessions
+                            </SidebarGroupLabel>
+
+                            <SidebarGroupContent>
+                                <SidebarMenu>
+                                    {userData?.sessionsOwned?.map((session: any) => (
+                                        <Link key={session.id} href={`/home/queueing/${session.joinCode}`}>
+                                            <SidebarMenuItem key={session.id}>
+                                                <SidebarMenuButton className="">
+                                                    <div className="size-4 shrink-0 overflow-hidden rounded-md bg-green-400">
+                                                        {/* logo */}
+                                                    </div>
+
+                                                    <span className="min-w-0 truncate">
+                                                        {session.name}
+                                                    </span>
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                        </Link>
+                                    ))}
+                                </SidebarMenu>
+                            </SidebarGroupContent>
+                        </SidebarGroup>
+                    )
+                }
+
+                {
                     userData?.ownedClubs?.length > 0 && (
                         <SidebarGroup>
                             <SidebarGroupLabel>
@@ -165,21 +196,24 @@ export function AppSidebar() {
                             <SidebarGroupContent>
                                 <SidebarMenu>
                                     {userData?.ownedClubs?.map((club: any) => (
-                                        <SidebarMenuItem key={club.id}>
-                                            <SidebarMenuButton className="">
-                                                <div className="size-4 shrink-0 overflow-hidden rounded-md bg-green-400">
-                                                    {/* logo */}
-                                                </div>
+                                        <Link key={club.id} href={`/home/clubs/${club.slug}`}>
+                                            <SidebarMenuItem key={club.id}>
+                                                <SidebarMenuButton className="">
+                                                    <div className="size-4 shrink-0 overflow-hidden rounded-md bg-green-400">
+                                                        {/* logo */}
+                                                    </div>
 
-                                                {club.name}
-                                            </SidebarMenuButton>
-                                        </SidebarMenuItem>
+                                                    {club.name}
+                                                </SidebarMenuButton>
+                                            </SidebarMenuItem>
+                                        </Link>
                                     ))}
                                 </SidebarMenu>
                             </SidebarGroupContent>
                         </SidebarGroup>
                     )
                 }
+
             </SidebarContent>
 
             {/* Footer */}

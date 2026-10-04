@@ -1,7 +1,9 @@
 'use client'
 
+import { Button } from "@/components/ui/button"
 import { fetchApi } from "@/lib/fetchApi"
 import { useQuery } from "@tanstack/react-query"
+import Link from "next/link"
 import { use } from "react"
 
 export default function Session({ params }: { params: Promise<any> }) {
@@ -35,8 +37,10 @@ export default function Session({ params }: { params: Promise<any> }) {
     })
 
     return (
-        <div>
-
+        <div className="flex items-center justify-center h-full">
+            <Link href={`/home/sys/${code}`}>
+                <Button>Open Session</Button>
+            </Link>
         </div>
     )
 }

@@ -17,12 +17,12 @@ import {
 } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 
-import type { FormData, OwnedClub } from "./page"
+import type { FormData } from "./page"
 
 
 type Props = {
     form: FormData
-    clubs: OwnedClub[]
+    clubs: any[]
     loadingClubs: boolean
     updateForm: <K extends keyof FormData>(
         field: K,
